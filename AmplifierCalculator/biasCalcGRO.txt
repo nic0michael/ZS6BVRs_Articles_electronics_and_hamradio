@@ -1,0 +1,229 @@
+# **transistor-bias-calculator.xls** file content that you can create in seconds.
+
+### Copy-Paste Version (Google Sheets / Excel)
+Open a new blank Excel or Google Sheet → click cell A1 → paste the entire block below:
+
+```plaintext
+A1:	Transistor Bias Calculator (NPN) + Input Impedance + Voltage Gain dB - Fully Dynamic v2
+
+A3:	=== INPUTS - Change any of these freely ===
+B4:	Parameter			C4:	Value			D4:	Unit		E4:	Notes
+B5:	VCC				C5:	12			D5:	V		E5:	Supply voltage
+B6:	Beta (β or hFE)			C6:	200					E6:	Current gain (100–400 typical)
+B7:	VBE (on)			C7:	0.7			D7:	V		E7:	0.65–0.72 V
+B8:	Desired IC			C8:	1			D8:	mA		E8:	Collector current you want
+B9:	RC (Collector resistor)		C9:	4.7			D9:	kΩ		E9:	Will be auto-calculated if you prefer
+B10:	RE (Emitter resistor)		C10:	1			D10:	kΩ		E10:	Strongly recommended for stability
+B11:	R1 (top of divider)		C11:	100			D11:	kΩ		
+B12:	R2 (bottom of divider)		C12:	22			D12:	kΩ		
+B13:	Safety factor (β×RE rule)	C13:	10					E13:	10–15 is normal
+
+A15:	=== AUTOMATIC CALCULATIONS ===
+B16:	VB (base voltage)		C16:	=(C12/(C11+C12))*C5		D16:	V
+B17:	VE (emitter voltage)		C17:	=C16-C7				D17:	V
+B18:	IC (actual)			C18:	=C17/C10			D18:	mA
+B19:	VCE				C19:	=C5 - C18*(C9+C10)		D19:	V
+B20:	re (intrinsic emitter resistance)	C20:	=0.026/C18			D20:	Ω		E20:	26mV / IC
+B21:	Input resistance at base (rib)	C21:	=C6*(C20+C10*1000)		D21:	Ω
+B22:	Input impedance Zin (seen from signal source)	C22:	=(C11*C12/(C11+C12))*C21/((C11*C12/(C11+C12))+C21)	D22:	kΩ	E22:	≈ R1||R2||rib  (exact formula)
+B23:	Voltage gain Av (magnitude)	C23:	=C9 / (C10 + C20/1000)		D23:	V/V	E23:	RC / (RE + re)
+B24:	Voltage gain in dB		C24:	=20*LOG10(ABS(C23))		D24:	dB
+
+A26:	=== RECOMMENDED VALUES (rounded to E24 series) ===
+B27:	Recommended RE (for exact IC)	C27:	=C17/C8				D27:	Ω
+B28:	Recommended RC (~VCE = VCC/2)	C28:	=(C5/2 - C17)/(C8/1000)		D28:	kΩ
+B29:	Suggested R1 (rounded)		C29:	=ROUND((C12*(C5/C16-1))/10,0)*10	D29:	kΩ
+B30:	Suggested R2 (β×RE×10 rule)	C30:	=ROUND(C6*C10*C13/10,0)*10	D30:	kΩ
+B31:	Suggested RC (rounded)		C31:	=ROUND(C28*10,0)/10		D31:	kΩ
+B32:	Suggested RE (rounded)		C32:	=ROUND(C27/100,0)*100		D32:	Ω
+
+A34:	=== FINAL RESULTS - YOUR MAIN NUMBERS ===
+B35:	R1 (final)			C35:	=C29			D35:	kΩ		E35:	← YOUR REQUESTED R1 VALUE
+B36:	Input Impedance Zin		C36:	=ROUND(C22,1)		D36:	kΩ
+B37:	Voltage Gain			C37:	=ROUND(C23,1)		D37:	V/V
+B38:	Voltage Gain			C38:	=ROUND(C24,1)		D38:	dB		E38:	← NEW: Gain in dB
+
+A40:	Quick summary (copy-paste into schematic)
+B41:	Use:  R1 = C35 kΩ │ R2 = C30 kΩ │ RC = C31 kΩ │ RE = C32 Ω │ Zin ≈ C36 kΩ │ Av = C38 dB
+```
+
+
+=======================
+
+CHGPT.xls
+1. Short, **step-by-step numeric answers** for this example.
+2. A **ready-to-paste Excel block** (every text cell prefixed with a tick `'` so Excel treats it as string) that includes the new formulas for:
+
+   * intrinsic emitter resistance (r_e),
+   * (r_{\pi}),
+   * input impedance at the base (Z_{in(base)}),
+   * input impedance seen by the source (R1‖R2‖Zin_base),
+   * small-signal voltage gain (A_v) (magnitude and dB).
+
+---
+
+## 1) Numeric results (example values already used)
+
+Given (repeating so the numbers below are clear):
+
+* (V_{CC}=12\ \text{V})
+* (\beta = 200)
+* (R_C = 680,\Omega)
+* (R_E = 68,\Omega)
+* (V_{RE}=1.20\ \text{V}) → (I_E = 1.2/68 = 0.0176470588\ \text{A})
+* (V_{BE}=0.7\ \text{V})
+* (R_2=680,\Omega)
+* Computed earlier: (R_1 = 3504.615384615385\ \Omega)
+
+### a) small-signal emitter intrinsic resistance (r_e)
+
+Use thermal voltage ≈ 26 mV:
+[
+r_e = \frac{26\ \text{mV}}{I_E} = \frac{0.026}{0.0176470588}=1.4733\ \Omega
+]
+
+### b) (r_{\pi})
+
+[
+r_{\pi} = \beta \cdot r_e = 200 \times 1.4733 = 294.67\ \Omega
+]
+
+### c) Input impedance looking into the base (Zin at base)
+
+For emitter un-bypassed:
+[
+Z_{in(base)} \approx r_{\pi} + (\beta+1)R_E
+=294.67 + 201\times68 = 13,962.67\ \Omega \approx 13.96\ \text{k}\Omega
+]
+
+### d) Input impedance seen by a source connected to R1 (i.e. R1‖R2‖Zin_base)
+
+First R1‖R2 = 3504.615‖680 = 569.5 Ω (exact).
+Then Rin_source = parallel(569.5, 13,962.67) = **≈ 547.18 Ω**
+
+So:
+
+* (Z_{in(base)} \approx 13.96\ \text{k}\Omega)
+* (Z_{in(source)} \approx 547.18\ \Omega)
+
+(Interpretation: the low R2 and R1 values heavily load the base; the source sees ≈550 Ω.)
+
+### e) Small-signal voltage gain (magnitude and dB)
+
+Using small-signal formula with emitter degeneration:
+[
+g_m \approx \frac{1}{r_e} = \frac{1}{1.4733} = 0.6787\ \text{S}
+]
+[
+A_v \approx -\frac{g_m R_C}{1 + g_m R_E}
+= -\frac{0.6787 \times 680}{1 + 0.6787\times68}
+\approx -9.788
+]
+Magnitude = 9.788 → in dB:
+[
+20\log_{10}(9.788) \approx 19.81\ \text{dB}
+]
+
+So **voltage gain ≈ −9.79 (≈ 19.81 dB magnitude)**. (Negative sign = 180° phase inversion.)
+
+**Important practical note:** earlier we found (V_{CE}) calculated negative (transistor would saturate). The linear gain formula above assumes the transistor is in the active region; if the device is saturated the actual gain will be much lower. Use these small-signal results only while the transistor stays in the active region.
+
+---
+
+## 2) Ready-to-paste Excel block (with leading tick on text lines)
+
+Copy everything inside the code block, paste into **Excel cell A1**. Text labels are prefixed with `'` so Excel treats them as strings; formula lines are not prefixed (they will be entered as live formulas).
+
+```plaintext
+'A1:    R1 Calculator for NPN Transistor (2N3439 example)
+'A2:
+'A3:    === INPUTS — Change these values freely ===
+'A4:    Parameter          B4: Value          C4: Unit
+'A5:    VCC                B5: 12             C5: V
+'A6:    HFE (β)            B6: 200            C6: -
+'A7:    RC                 B7: 680            C7: ohm
+'A8:    RE                 B8: 68             C8: ohm
+'A9:    V_RE (across RE)   B9: 1.2            C9: V
+'A10:   V_BE               B10: 0.7           C10: V
+'A11:   R2 (base→GND)      B11: 680           C11: ohm
+'A12:   Transistor         B12: 2N3439        C12:
+
+'A14:   === CALCULATED VALUES (auto computed) ===
+
+'A15:   Ie (A) = V_RE / RE
+B15:   =B9 / B8
+
+'A16:   Ib (A) = Ie / (HFE + 1)
+B16:   =C15 / (C6 + 1)
+
+'A17:   Ic (A) = HFE * Ib
+B17:   =C6 * C16
+
+'A18:   Base voltage Vb (V)
+B18:   =c9 + c10
+
+'A19:   R1 (ohms) = (VCC - Vb) / (Vb/R2 + Ib)
+B19:   =(C5 - C18) / (C18/C1 + C6)
+
+'A20:   Collector voltage Vc (V)
+B20:   =C5 - C17 * C7
+
+'A21:   VCE (V)
+B21:   =B20 - B9
+
+'A23:   === intrinsic and small-signal parameters ===
+
+'A24:   r_e (ohm) = 26mV / Ie
+B24:   =0.026 / C15
+
+'A25:   r_pi (ohm) = HFE * r_e
+B25:   =C6 * C24
+
+'A26:   g_m (S) = 1 / r_e
+B26:   =1 / C24
+
+'A28:   === INPUT IMPEDANCES ===
+
+'A29:   Zin (base) = r_pi + (HFE+1)*RE
+B29:   =C25 + (C6 + 1) * C8
+
+'A30:   R1||R2 (ohm)
+B30:   =1 / (1 / C19 + 1 / C11)
+
+'A31:   Zin seen by source = (R1||R2) || Zin(base)
+B31:   =1 / (1 / C30 + 1 / C29)
+
+'A33:   === VOLTAGE GAIN ===
+
+'A34:   Av (approx) = - (g_m * RC) / (1 + g_m * RE)
+B34:   = - (C26 * C7) / (1 + C26 * C8)
+
+'A35:   |Av| (magnitude)
+B35:   =ABS(C34)
+
+'A36:   Av (dB)
+B36:   =20 * LOG10(C35)
+
+'A38:   === POWER DISSIPATION ===
+
+'A39:   Power_RC (W)
+B39:   =C17^2 * C7
+
+'A40:   Power_RE (W)
+B40:   =C15^2 * C8
+
+'A41:   Power_R2 (W)
+B41:   =C18^2 / C11
+
+'A42:   Power_R1 (W)
+B42:   =(C5 - C18)^2 / C19
+
+'A44:   === NOTES ===
+'A45:   - Change any INPUT cell (column B rows 5-12) and outputs update.
+'A46:   - r_e uses 26 mV approximation (good near room temperature).
+'A47:   - Av formulas assume transistor remains in active region (not saturated).
+```
+
+---
+
+
